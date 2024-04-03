@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:capstone/app/app_home_page.dart';
 import 'package:capstone/web/web_home_page.dart';
 import 'package:flutter/foundation.dart';
@@ -11,7 +13,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(primaryColor: const Color(0xffE5E5E5)),
+      theme: ThemeData(
+          primaryColor: const Color(0xffE5E5E5),
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {
+              TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+              TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+            },
+          )),
       home: kIsWeb ? const WebHomePage() : const AppHomePage(),
     );
   }

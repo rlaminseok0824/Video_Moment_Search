@@ -1,5 +1,5 @@
-import 'package:capstone/api.dart';
-import 'package:capstone/video_setup.dart';
+import 'package:capstone/apis/api.dart';
+import 'package:capstone/web/video_setup.dart';
 import 'package:chewie/chewie.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';

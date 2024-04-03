@@ -1,5 +1,5 @@
-import 'package:capstone/app_home_page.dart';
-import 'package:capstone/web_home_page.dart';
+import 'package:capstone/app/app_home_page.dart';
+import 'package:capstone/web/web_home_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 

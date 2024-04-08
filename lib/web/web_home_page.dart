@@ -143,6 +143,9 @@ class _WebHomePageState extends State<WebHomePage> {
                                     }
                                   });
                                   final timeStamps = await getTimeStamps();
+                                  for (int i = 0; i < timeStamps.length; i++) {
+                                    await trimGivenTimeStamps(timeStamps[i]);
+                                  }
 
                                   setState(() {
                                     _messages.add(timeStamps.toString());
@@ -335,5 +338,31 @@ class _WebHomePageState extends State<WebHomePage> {
         xfileVideo = XFile.fromData(filePickerResult.files.single.bytes!);
       });
     }
+  }
+
+  Future<void> trimGivenTimeStamps(List<String> timeStamp) async {
+    await ffmpeg.run([
+      '-i',
+      'input.mp4',
+      '-ss',
+      timeStamp[0],
+      '-to',
+      timeStamp[1],
+      'output.mp4',
+    ]);
+
+    final video = ffmpeg.readFile('output.mp4');
+    final XFile newVideo = XFile.fromData(video);
+
+    final newController =
+        VideoPlayerController.networkUrl(Uri.parse(newVideo.path))
+          ..initialize().then((_) {
+            setState(() {});
+          });
+
+    // Add the new controller to the list
+    semiResultControllers.add(newController);
+
+    setState(() {});
   }
 }

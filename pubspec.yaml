@@ -51,6 +51,9 @@ dependencies:
   file_picker: ^8.0.0
   chewie: ^1.8.1
   collection: ^1.18.0
+  
+  ffmpeg_wasm: ^1.0.1
+  cross_file: ^0.3.4+1
 
 
 

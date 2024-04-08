@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:capstone/app/app_home_page.dart';
 import 'package:capstone/web/web_home_page.dart';
 import 'package:flutter/foundation.dart';

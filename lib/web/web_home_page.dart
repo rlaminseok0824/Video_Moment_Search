@@ -26,6 +26,7 @@ class _WebHomePageState extends State<WebHomePage> {
   final TextEditingController _textEditingController = TextEditingController();
   final List<String> _messages = [];
   final List<VideoPlayerController> semiResultControllers = [];
+  final Set<int> _selectedIndices = {};
 
   final progress = ValueNotifier<double?>(null);
   final statistics = ValueNotifier<String?>(null);
@@ -251,26 +252,61 @@ class _WebHomePageState extends State<WebHomePage> {
             border: Border.all(color: const Color(0xffFCA311), width: 1),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: semiResultControllers.map((controller) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 400),
-                    child: SizedBox(
-                      height: 200,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.black),
-                        ),
-                        child: Chewie(
-                          controller: ChewieController(
-                            videoPlayerController: controller,
-                            aspectRatio: controller.value.aspectRatio,
+            padding: const EdgeInsets.all(16.0),
+            child: Wrap(
+              spacing: 16.0,
+              runSpacing: 16.0,
+              children: semiResultControllers.mapIndexed((index, controller) {
+                return ConstrainedBox(
+                  constraints:
+                      const BoxConstraints(maxWidth: 300, maxHeight: 200),
+                  child: SizedBox(
+                    width: controller.value.size.width,
+                    height: controller.value.size.height,
+                    child: Stack(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black),
+                          ),
+                          child: Chewie(
+                            controller: ChewieController(
+                              videoPlayerController: controller,
+                              aspectRatio: controller.value.aspectRatio,
+                            ),
                           ),
                         ),
-                      ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                if (_selectedIndices.contains(index)) {
+                                  _selectedIndices.remove(index);
+                                } else {
+                                  _selectedIndices.add(index);
+                                }
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8.0),
+                              decoration: BoxDecoration(
+                                color: _selectedIndices.contains(index)
+                                    ? Colors.green
+                                    : Colors.grey,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                _selectedIndices.contains(index)
+                                    ? Icons.check
+                                    : Icons.check_box_outline_blank,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -389,7 +425,6 @@ class _WebHomePageState extends State<WebHomePage> {
             setState(() {});
           });
 
-    // Add the new controller to the list
     semiResultControllers.add(newController);
 
     setState(() {});

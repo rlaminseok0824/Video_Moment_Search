@@ -375,6 +375,8 @@ class _WebHomePageState extends State<WebHomePage> {
       timeStamp[0],
       '-to',
       timeStamp[1],
+      '-c',
+      'copy',
       'output.mp4',
     ]);
 

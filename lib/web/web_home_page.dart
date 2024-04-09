@@ -260,12 +260,12 @@ class _WebHomePageState extends State<WebHomePage> {
                 return ConstrainedBox(
                   constraints:
                       const BoxConstraints(maxWidth: 300, maxHeight: 200),
-                  child: SizedBox(
-                    width: controller.value.size.width,
-                    height: controller.value.size.height,
-                    child: Stack(
-                      children: [
-                        Container(
+                  child: Stack(
+                    children: [
+                      SizedBox(
+                        width: controller.value.size.width,
+                        height: controller.value.size.height,
+                        child: Container(
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.black),
                           ),
@@ -276,38 +276,38 @@ class _WebHomePageState extends State<WebHomePage> {
                             ),
                           ),
                         ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                if (_selectedIndices.contains(index)) {
-                                  _selectedIndices.remove(index);
-                                } else {
-                                  _selectedIndices.add(index);
-                                }
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(8.0),
-                              decoration: BoxDecoration(
-                                color: _selectedIndices.contains(index)
-                                    ? Colors.green
-                                    : Colors.grey,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                _selectedIndices.contains(index)
-                                    ? Icons.check
-                                    : Icons.check_box_outline_blank,
-                                color: Colors.white,
-                              ),
+                      ),
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              if (_selectedIndices.contains(index)) {
+                                _selectedIndices.remove(index);
+                              } else {
+                                _selectedIndices.add(index);
+                              }
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(8.0),
+                            decoration: BoxDecoration(
+                              color: _selectedIndices.contains(index)
+                                  ? Colors.blue
+                                  : Colors.grey,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _selectedIndices.contains(index)
+                                  ? Icons.check
+                                  : Icons.check_box_outline_blank,
+                              color: Colors.white,
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 );
               }).toList(),
@@ -332,6 +332,11 @@ class _WebHomePageState extends State<WebHomePage> {
                 _buildContainer(),
                 const SizedBox(height: 16),
                 _buildResult(),
+                ElevatedButton(
+                    onPressed: () async {
+                      await mergeVideo();
+                    },
+                    child: const Text('Merge Videos')),
               ],
             ),
           ),
@@ -404,6 +409,21 @@ class _WebHomePageState extends State<WebHomePage> {
   }
 
   Future<void> trimGivenTimeStamps(List<String> timeStamp) async {
+    final currControllerLength = semiResultControllers.length;
+
+    await ffmpeg.run([
+      '-y',
+      '-i',
+      'input.mp4',
+      '-ss',
+      timeStamp[0],
+      '-to',
+      timeStamp[1],
+      '-c',
+      'copy',
+      'output$currControllerLength.mp4',
+    ]);
+
     await ffmpeg.run([
       '-i',
       'input.mp4',
@@ -413,10 +433,10 @@ class _WebHomePageState extends State<WebHomePage> {
       timeStamp[1],
       '-c',
       'copy',
-      'output.mp4',
+      'output$currControllerLength.ts',
     ]);
 
-    final video = ffmpeg.readFile('output.mp4');
+    final video = ffmpeg.readFile('output$currControllerLength.mp4');
     final XFile newVideo = XFile.fromData(video);
 
     final newController =
@@ -429,4 +449,72 @@ class _WebHomePageState extends State<WebHomePage> {
 
     setState(() {});
   }
+
+  Future<void> mergeVideo() async {
+    final inputFiles = [];
+    for (var i = 0; i < _selectedIndices.length; i++) {
+      inputFiles.add('output${_selectedIndices.elementAt(i)}.mp4');
+    }
+
+    await ffmpeg.run([
+      '-i',
+      'concat:output0.ts|output1.ts',
+      '-c',
+      'copy',
+      'output_merged.mp4',
+    ]);
+    // '-y -i "concat:$firstVideoPath|$secondVideoPath" -c copy $outputPath'
+
+    // 이제 concat이 되는데 이렇게 되면 너무 오래 걸림
+    // await ffmpeg.runCommand(
+    //     '-y -i output0.mp4 -i output1.mp4 -r 24000/1001 -filter_complex [0:v]scale=1080:1920[v0];[1:v]scale=1080:1920[v1];[v0][v1]concat=n=2:v=1:[outv] -map [outv] -vsync 2 output.mp4');
+
+    final video = ffmpeg.readFile('output_merged.mp4');
+    final XFile newVideo = XFile.fromData(video);
+
+    final newController =
+        VideoPlayerController.networkUrl(Uri.parse(newVideo.path))
+          ..initialize().then((_) {
+            setState(() {});
+          });
+
+    semiResultControllers.add(newController);
+
+    setState(() {});
+  }
+
+  // Future<void> mergeVideo() async {
+  //   final inputFiles = <String>[];
+  //   for (var i = 0; i < semiResultControllers.length; i++) {
+  //     inputFiles.add('output$i.mp4');
+  //   }
+
+  //   final concatString = inputFiles.map((file) => "-i $file").join(" ");
+
+  //   await ffmpeg.run([
+  //     "-i",
+  //     "output0.mp4",
+  //     "-i",
+  //     "output1.mp4",
+  //     "-filter_complex",
+  //     "[0:v]scale=1080:1920[v0];[1:v]scale=1080:1920[v1];[v0][0:a][v1][1:a]concat=n=2:v=1:a=1[outv][outa]",
+  //     "-map",
+  //     '[outv]',
+  //     "-map",
+  //     '[outa]',
+  //     '-vsync',
+  //     '2',
+  //     "output_merged.mp4",
+  //   ]);
+
+  //   final video = ffmpeg.readFile('output_merged.mp4');
+  //   final XFile newVideo = XFile.fromData(video);
+  //   final newController =
+  //       VideoPlayerController.networkUrl(Uri.parse(newVideo.path))
+  //         ..initialize().then((_) {
+  //           setState(() {});
+  //         });
+  //   semiResultControllers.add(newController);
+  //   setState(() {});
+  // }
 }

@@ -32,6 +32,20 @@ class _WebHomePageState extends State<WebHomePage> {
 
   bool isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    loadFFmpeg();
+  }
+
+  @override
+  void dispose() {
+    progress.dispose();
+    statistics.dispose();
+
+    super.dispose();
+  }
+
   AppBar _buildAppBar() {
     return AppBar(
       title: const Text(
@@ -184,7 +198,6 @@ class _WebHomePageState extends State<WebHomePage> {
     return InkWell(
       onTap: () async {
         try {
-          await loadFFmpeg();
           await pickFile();
           if (videoTitle != null) {
             controller =
@@ -217,40 +230,54 @@ class _WebHomePageState extends State<WebHomePage> {
 
   Widget _buildResult() {
     double width = MediaQuery.of(context).size.width * 0.8;
-
     return Column(
       children: [
         const Center(
           child: Text(
             'Result Video',
             style: TextStyle(
-                color: Color(0xff14213D),
-                fontSize: 24,
-                fontWeight: FontWeight.bold),
+              color: Color(0xff14213D),
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         const SizedBox(height: 16),
         Container(
-            width: width,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: const Color(0xffFCA311), width: 1),
-            ),
+          width: width,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: const Color(0xffFCA311), width: 1),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: semiResultControllers.map((controller) {
-                return SizedBox(
-                  height: 200,
-                  child: Chewie(
-                    controller: ChewieController(
-                      videoPlayerController: controller,
-                      aspectRatio: controller.value.aspectRatio,
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 400),
+                    child: SizedBox(
+                      height: 200,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black),
+                        ),
+                        child: Chewie(
+                          controller: ChewieController(
+                            videoPlayerController: controller,
+                            aspectRatio: controller.value.aspectRatio,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 );
               }).toList(),
-            )),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -275,7 +302,7 @@ class _WebHomePageState extends State<WebHomePage> {
         )));
   }
 
-  Future<void> loadFFmpeg() async {
+  void loadFFmpeg() async {
     ffmpeg = createFFmpeg(CreateFFmpegParam(
         log: true,
         corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'));

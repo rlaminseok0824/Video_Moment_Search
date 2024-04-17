@@ -1,12 +1,14 @@
 import 'dart:js' as js;
 import 'dart:html' as html;
 
-import 'package:capstone/apis/api.dart';
-import 'package:chewie/chewie.dart';
-import 'package:collection/collection.dart';
+import 'package:capstone/web/widgets/chat_page.dart';
+import 'package:capstone/web/widgets/result_page.dart';
+import 'package:capstone/web/widgets/upload_button_page.dart';
+import 'package:capstone/web/widgets/video_player_page.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:ffmpeg_wasm/ffmpeg_wasm.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -19,14 +21,11 @@ class WebHomePage extends StatefulWidget {
 
 class _WebHomePageState extends State<WebHomePage> {
   late FFmpeg ffmpeg;
-  late XFile xfileVideo;
   FilePickerResult? filePickerResult;
-  String? videoTitle;
+  bool isMainVideoUploaded = false;
   VideoPlayerController? controller; // MainVideoController
-  final TextEditingController _textEditingController = TextEditingController();
-  final List<String> _messages = [];
   final List<VideoPlayerController> semiResultControllers = [];
-  final Set<int> _selectedIndices = {};
+  final List<int> _selectedIndices = [];
 
   final progress = ValueNotifier<double?>(null);
   final statistics = ValueNotifier<String?>(null);
@@ -41,6 +40,17 @@ class _WebHomePageState extends State<WebHomePage> {
 
   @override
   void dispose() {
+    ffmpeg.exit();
+    if (controller != null) {
+      controller!.dispose();
+    }
+
+    if (semiResultControllers.isNotEmpty) {
+      for (var i = 0; i < semiResultControllers.length; i++) {
+        semiResultControllers[i].dispose();
+      }
+    }
+
     progress.dispose();
     statistics.dispose();
 
@@ -74,6 +84,13 @@ class _WebHomePageState extends State<WebHomePage> {
     );
   }
 
+  void _setController(VideoPlayerController newController) {
+    setState(() {
+      controller = newController;
+      isMainVideoUploaded = true;
+    });
+  }
+
   Widget _buildContainer() {
     double width = MediaQuery.of(context).size.width * 0.4;
     double height = MediaQuery.of(context).size.height * 0.6;
@@ -85,243 +102,52 @@ class _WebHomePageState extends State<WebHomePage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            decoration: BoxDecoration(border: border),
-            width: width,
-            height: height,
-            child: (videoTitle == null) ? _uploadButton() : _buildVideoPlayer(),
-          ),
+              decoration: BoxDecoration(border: border),
+              width: width,
+              height: height,
+              child: (isMainVideoUploaded)
+                  ? VideoPlayerComponent(
+                      chewieController: controller!,
+                      autoPlay: true,
+                    )
+                  : UploadButtonPage(
+                      setStateCallback: _setController,
+                      ffmpeg: ffmpeg,
+                    )),
           Container(
               width: width,
               height: height,
               decoration: BoxDecoration(border: border),
-              child: Stack(
-                children: [
-                  SingleChildScrollView(
-                    child: Column(children: [
-                      ..._messages.mapIndexed((index, message) {
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Align(
-                            alignment: index.isEven
-                                ? Alignment.topRight
-                                : Alignment.topLeft,
-                            child: Container(
-                              padding: const EdgeInsets.all(8.0),
-                              decoration: BoxDecoration(
-                                color: const Color(0xffFCA311),
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              child: Text(
-                                message,
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                      const SizedBox(height: 75)
-                    ]),
-                  ),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Container(height: 50, color: Colors.white),
-                  ),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: TextField(
-                        controller: _textEditingController,
-                        style: const TextStyle(color: Colors.white),
-                        enabled:
-                            (videoTitle != null && videoTitle!.isNotEmpty) &&
-                                !isLoading,
-                        decoration: InputDecoration(
-                            hintText: 'Enter your text here',
-                            hintStyle: const TextStyle(color: Colors.white),
-                            filled: true,
-                            fillColor: const Color(0xffFCA311),
-                            border: const OutlineInputBorder(
-                              borderSide: BorderSide.none,
-                            ),
-                            suffixIcon: IconButton(
-                                icon:
-                                    const Icon(Icons.send, color: Colors.white),
-                                onPressed: () async {
-                                  setState(() {
-                                    if (_textEditingController
-                                        .text.isNotEmpty) {
-                                      _messages
-                                          .add(_textEditingController.text);
-                                      _textEditingController.clear();
-                                      isLoading = true;
-                                    }
-                                  });
-                                  final timeStamps = await getTimeStamps();
-                                  for (int i = 0; i < timeStamps.length; i++) {
-                                    await trimGivenTimeStamps(timeStamps[i]);
-                                  }
-
-                                  setState(() {
-                                    _messages.add(timeStamps.toString());
-                                    isLoading = false;
-                                  });
-                                })),
-                        maxLines: 1,
-                      ),
-                    ),
-                  ),
-                  (isLoading)
-                      ? const Center(child: CircularProgressIndicator())
-                      : Container(),
-                ],
+              child: ChatPage(
+                isMainVideoUploaded: isMainVideoUploaded,
+                trimGivenTimeStamps: trimGivenTimeStamps,
               )),
         ],
       ),
     );
   }
 
-  Widget _buildVideoPlayer() {
-    if (controller != null && controller!.value.isInitialized) {
-      return Chewie(
-        controller: ChewieController(
-          videoPlayerController: controller!,
-          aspectRatio: controller!.value.aspectRatio,
-          autoPlay: true,
-        ),
-      );
-    } else {
-      return Container();
-    }
-  }
-
-  Widget _uploadButton() {
-    return InkWell(
-      onTap: () async {
-        try {
-          await pickFile();
-          if (videoTitle != null) {
-            controller =
-                VideoPlayerController.networkUrl(Uri.parse(xfileVideo.path))
-                  ..initialize().then((_) {
-                    setState(() {});
-                  });
-          }
-        } catch (e) {
-          const ContinuousRectangleBorder();
-        }
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.cloud_upload, color: Color(0xffE5E5E5)),
-            SizedBox(width: 8),
-            Text('Upload Video', style: TextStyle(color: Color(0xffE5E5E5))),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildResult() {
     double width = MediaQuery.of(context).size.width * 0.8;
-    return Column(
-      children: [
-        const Center(
-          child: Text(
-            'Result Video',
-            style: TextStyle(
-              color: Color(0xff14213D),
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          width: width,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: const Color(0xffFCA311), width: 1),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Wrap(
-              spacing: 16.0,
-              runSpacing: 16.0,
-              children: semiResultControllers.mapIndexed((index, controller) {
-                return ConstrainedBox(
-                  constraints:
-                      const BoxConstraints(maxWidth: 300, maxHeight: 200),
-                  child: Stack(
-                    children: [
-                      SizedBox(
-                        width: controller.value.size.width,
-                        height: controller.value.size.height,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black),
-                          ),
-                          child: Chewie(
-                            controller: ChewieController(
-                              videoPlayerController: controller,
-                              aspectRatio: controller.value.aspectRatio,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              if (_selectedIndices.contains(index)) {
-                                _selectedIndices.remove(index);
-                              } else {
-                                _selectedIndices.add(index);
-                              }
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(8.0),
-                            decoration: BoxDecoration(
-                              color: _selectedIndices.contains(index)
-                                  ? Colors.blue
-                                  : Colors.grey,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              _selectedIndices.contains(index)
-                                  ? Icons.check
-                                  : Icons.check_box_outline_blank,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        ),
-      ],
-    );
+    return ResultPage(
+        width: width, semiResultControllers: semiResultControllers);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: _buildAppBar(),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            if (semiResultControllers.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('영상을 먼저 선택해주세요.')));
+              return;
+            }
+            await mergeVideo();
+          },
+          child: const Icon(Icons.merge_type),
+        ),
         body: SafeArea(
             child: SingleChildScrollView(
           child: Padding(
@@ -334,9 +160,9 @@ class _WebHomePageState extends State<WebHomePage> {
                 _buildResult(),
                 ElevatedButton(
                     onPressed: () async {
-                      await mergeVideo();
+                      await exportVideo();
                     },
-                    child: const Text('Merge Videos')),
+                    child: const Text('Export Video')),
               ],
             ),
           ),
@@ -395,19 +221,6 @@ class _WebHomePageState extends State<WebHomePage> {
     }
   }
 
-  Future<void> pickFile() async {
-    final filePickerResult =
-        await FilePicker.platform.pickFiles(type: FileType.video);
-    if (filePickerResult != null &&
-        filePickerResult.files.single.bytes != null) {
-      ffmpeg.writeFile('input.mp4', filePickerResult.files.single.bytes!);
-      setState(() {
-        videoTitle = filePickerResult.files.single.name;
-        xfileVideo = XFile.fromData(filePickerResult.files.single.bytes!);
-      });
-    }
-  }
-
   Future<void> trimGivenTimeStamps(List<String> timeStamp) async {
     final currControllerLength = semiResultControllers.length;
 
@@ -444,21 +257,24 @@ class _WebHomePageState extends State<WebHomePage> {
           ..initialize().then((_) {
             setState(() {});
           });
-
     semiResultControllers.add(newController);
 
     setState(() {});
   }
 
   Future<void> mergeVideo() async {
+    if (_selectedIndices.isEmpty) {
+      return;
+    }
+
     final inputFiles = [];
     for (var i = 0; i < _selectedIndices.length; i++) {
-      inputFiles.add('output${_selectedIndices.elementAt(i)}.mp4');
+      inputFiles.add('output${_selectedIndices.elementAt(i)}.ts');
     }
 
     await ffmpeg.run([
       '-i',
-      'concat:output0.ts|output1.ts',
+      'concat:${inputFiles.join('|')}',
       '-c',
       'copy',
       'output_merged.mp4',
@@ -480,41 +296,13 @@ class _WebHomePageState extends State<WebHomePage> {
 
     semiResultControllers.add(newController);
 
+    _selectedIndices.clear();
+
     setState(() {});
   }
 
-  // Future<void> mergeVideo() async {
-  //   final inputFiles = <String>[];
-  //   for (var i = 0; i < semiResultControllers.length; i++) {
-  //     inputFiles.add('output$i.mp4');
-  //   }
-
-  //   final concatString = inputFiles.map((file) => "-i $file").join(" ");
-
-  //   await ffmpeg.run([
-  //     "-i",
-  //     "output0.mp4",
-  //     "-i",
-  //     "output1.mp4",
-  //     "-filter_complex",
-  //     "[0:v]scale=1080:1920[v0];[1:v]scale=1080:1920[v1];[v0][0:a][v1][1:a]concat=n=2:v=1:a=1[outv][outa]",
-  //     "-map",
-  //     '[outv]',
-  //     "-map",
-  //     '[outa]',
-  //     '-vsync',
-  //     '2',
-  //     "output_merged.mp4",
-  //   ]);
-
-  //   final video = ffmpeg.readFile('output_merged.mp4');
-  //   final XFile newVideo = XFile.fromData(video);
-  //   final newController =
-  //       VideoPlayerController.networkUrl(Uri.parse(newVideo.path))
-  //         ..initialize().then((_) {
-  //           setState(() {});
-  //         });
-  //   semiResultControllers.add(newController);
-  //   setState(() {});
-  // }
+  Future<void> exportVideo() async {
+    await FileSaver.instance
+        .saveFile(name: "output.mp4", bytes: ffmpeg.readFile("output1.mp4"));
+  }
 }

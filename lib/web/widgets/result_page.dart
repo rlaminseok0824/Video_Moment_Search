@@ -5,10 +5,14 @@ import 'package:video_player/video_player.dart';
 
 class ResultPage extends StatefulWidget {
   const ResultPage(
-      {super.key, required this.width, required this.semiResultControllers});
+      {super.key,
+      required this.width,
+      required this.semiResultControllers,
+      required this.onSelectedIndices});
 
   final double width;
   final List<VideoPlayerController> semiResultControllers;
+  final Function(List<int>) onSelectedIndices;
 
   @override
   State<ResultPage> createState() => _ResultPageState();
@@ -84,6 +88,7 @@ class _ResultPageState extends State<ResultPage> {
                                   } else {
                                     _selectedIndices.add(index);
                                   }
+                                  widget.onSelectedIndices(_selectedIndices);
                                 });
                               },
                               child: Container(

@@ -2,6 +2,7 @@ import 'dart:js' as js;
 import 'dart:html' as html;
 
 import 'package:capstone/web/widgets/chat_page.dart';
+import 'package:capstone/web/widgets/floating_action_button.dart';
 import 'package:capstone/web/widgets/result_page.dart';
 import 'package:capstone/web/widgets/upload_button_page.dart';
 import 'package:capstone/web/widgets/video_player_page.dart';
@@ -130,23 +131,25 @@ class _WebHomePageState extends State<WebHomePage> {
   Widget _buildResult() {
     double width = MediaQuery.of(context).size.width * 0.8;
     return ResultPage(
-        width: width, semiResultControllers: semiResultControllers);
+      width: width,
+      semiResultControllers: semiResultControllers,
+      onSelectedIndices: (newIndicies) => {
+        setState(() {
+          _selectedIndices.clear();
+          _selectedIndices.addAll(newIndicies);
+        })
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: _buildAppBar(),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-            if (semiResultControllers.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('영상을 먼저 선택해주세요.')));
-              return;
-            }
-            await mergeVideo();
-          },
-          child: const Icon(Icons.merge_type),
+        floatingActionButton: CustomFloatingActionButton(
+          onMergePressed: mergeVideo,
+          onDownloadPressed: exportVideo,
+          onUploadPressed: pickFile,
         ),
         body: SafeArea(
             child: SingleChildScrollView(
@@ -158,15 +161,27 @@ class _WebHomePageState extends State<WebHomePage> {
                 _buildContainer(),
                 const SizedBox(height: 16),
                 _buildResult(),
-                ElevatedButton(
-                    onPressed: () async {
-                      await exportVideo();
-                    },
-                    child: const Text('Export Video')),
               ],
             ),
           ),
         )));
+  }
+
+  Future<void> pickFile() async {
+    final filePickerResult =
+        await FilePicker.platform.pickFiles(type: FileType.video);
+    if (filePickerResult != null &&
+        filePickerResult.files.single.bytes != null) {
+      ffmpeg.writeFile('input.mp4', filePickerResult.files.single.bytes!);
+      final xfileVideo = XFile.fromData(filePickerResult.files.single.bytes!);
+      final newController =
+          VideoPlayerController.networkUrl(Uri.parse(xfileVideo.path));
+      await newController.initialize();
+      setState(() {
+        isMainVideoUploaded = true;
+        controller = newController;
+      });
+    }
   }
 
   void loadFFmpeg() async {
@@ -291,7 +306,9 @@ class _WebHomePageState extends State<WebHomePage> {
     final newController =
         VideoPlayerController.networkUrl(Uri.parse(newVideo.path))
           ..initialize().then((_) {
-            setState(() {});
+            setState(() {
+              isMainVideoUploaded = true;
+            });
           });
 
     semiResultControllers.add(newController);

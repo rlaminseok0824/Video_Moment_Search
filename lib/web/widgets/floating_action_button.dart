@@ -47,12 +47,16 @@ class _CustomFloatingActionButtonState extends State<CustomFloatingActionButton>
                   width: 56,
                   height: 56,
                   child: FloatingActionButton(
+                    backgroundColor: const Color(0xff14213D),
                     heroTag: null,
                     onPressed: () async {
                       await widget.onUploadPressed();
                     },
                     tooltip: "Upload Video",
-                    child: const Icon(Icons.upload),
+                    child: const Icon(
+                      Icons.upload,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -62,12 +66,16 @@ class _CustomFloatingActionButtonState extends State<CustomFloatingActionButton>
                   width: 56,
                   height: 56,
                   child: FloatingActionButton(
+                    backgroundColor: const Color(0xff14213D),
                     heroTag: null,
                     onPressed: () async {
                       await widget.onMergePressed();
                     },
                     tooltip: "Merge Selected Video",
-                    child: const Icon(Icons.merge),
+                    child: const Icon(
+                      Icons.merge,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -77,12 +85,16 @@ class _CustomFloatingActionButtonState extends State<CustomFloatingActionButton>
                   width: 56,
                   height: 56,
                   child: FloatingActionButton(
+                    backgroundColor: const Color(0xff14213D),
                     heroTag: null,
                     onPressed: () async {
                       await widget.onDownloadPressed();
                     },
                     tooltip: "export Video",
-                    child: const Icon(Icons.download),
+                    child: const Icon(
+                      Icons.download,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -95,8 +107,12 @@ class _CustomFloatingActionButtonState extends State<CustomFloatingActionButton>
             height: 56,
             child: FittedBox(
               child: FloatingActionButton(
+                backgroundColor: const Color(0xff14213D),
                 onPressed: _toggleExpansion,
-                child: Icon(_isExpanded ? Icons.close : Icons.add),
+                child: Icon(
+                  _isExpanded ? Icons.close : Icons.add,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),

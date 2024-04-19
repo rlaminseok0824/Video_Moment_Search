@@ -143,7 +143,7 @@ class _WebHomePageState extends State<WebHomePage> {
         appBar: _buildAppBar(),
         floatingActionButton: CustomFloatingActionButton(
           onMergePressed: mergeVideo,
-          onDownloadPressed: exportVideo,
+          onDownloadPressed: exportVideos,
           onUploadPressed: pickFile,
         ),
         body: SafeArea(
@@ -311,14 +311,28 @@ class _WebHomePageState extends State<WebHomePage> {
 
     semiResultControllers.add(newController);
 
-    _selectedIndices.clear();
-
-    setState(() {});
+    setState(() {
+      _selectedIndices.clear();
+    });
   }
 
-  Future<void> exportVideo() async {
-    await FileSaver.instance
-        .saveFile(name: "output.mp4", bytes: ffmpeg.readFile("output1.mp4"));
+  Future<void> exportVideos() async {
+    if (_selectedIndices.isEmpty) {
+      return;
+    }
+
+    for (int i = 0; i < _selectedIndices.length; i++) {
+      await exportVideo(i, _selectedIndices.elementAt(i));
+    }
+
+    setState(() {
+      _selectedIndices.clear();
+    });
+  }
+
+  Future<void> exportVideo(int idx1, int idx2) async {
+    await FileSaver.instance.saveFile(
+        name: "output$idx1.mp4", bytes: ffmpeg.readFile("output$idx2.mp4"));
   }
 
   void deleteVideo(int selectedIndex) {

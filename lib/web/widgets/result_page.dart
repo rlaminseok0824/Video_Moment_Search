@@ -1,3 +1,4 @@
+import 'package:capstone/web/widgets/checked_box_component.dart';
 import 'package:chewie/chewie.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -8,21 +9,21 @@ class ResultPage extends StatefulWidget {
       {super.key,
       required this.width,
       required this.semiResultControllers,
-      required this.onSelectedIndices});
+      required this.getSelectedIndices});
 
   final double width;
   final List<VideoPlayerController> semiResultControllers;
-  final Function(List<int>) onSelectedIndices;
+
+  final List<int> Function() getSelectedIndices;
 
   @override
   State<ResultPage> createState() => _ResultPageState();
 }
 
 class _ResultPageState extends State<ResultPage> {
-  final List<int> _selectedIndices = [];
-
   @override
   Widget build(BuildContext context) {
+    List<int> selectedIndices = widget.getSelectedIndices();
     return Column(
       children: [
         const Center(
@@ -80,44 +81,18 @@ class _ResultPageState extends State<ResultPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  if (_selectedIndices.contains(index)) {
-                                    _selectedIndices.remove(index);
-                                  } else {
-                                    _selectedIndices.add(index);
-                                  }
-                                  widget.onSelectedIndices(_selectedIndices);
-                                });
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(8.0),
-                                decoration: BoxDecoration(
-                                  color: _selectedIndices.contains(index)
-                                      ? Colors.blue
-                                      : Colors.grey,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: Center(
-                                    child: _selectedIndices.contains(index)
-                                        ? Text(
-                                            '${_selectedIndices.indexOf(index) + 1}',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                            ))
-                                        : const Icon(
-                                            Icons.check_box_outline_blank,
-                                            color: Colors.white,
-                                            size: 14,
-                                          ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                            CheckedBox(
+                                index: selectedIndices.indexOf(index) + 1,
+                                onPressed: () {
+                                  setState(() {
+                                    if (selectedIndices.contains(index)) {
+                                      selectedIndices.remove(index);
+                                    } else {
+                                      selectedIndices.add(index);
+                                    }
+                                  });
+                                },
+                                isSelected: selectedIndices.contains(index)),
                           ],
                         ),
                       ),

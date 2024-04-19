@@ -133,12 +133,7 @@ class _WebHomePageState extends State<WebHomePage> {
     return ResultPage(
       width: width,
       semiResultControllers: semiResultControllers,
-      onSelectedIndices: (newIndicies) => {
-        setState(() {
-          _selectedIndices.clear();
-          _selectedIndices.addAll(newIndicies);
-        })
-      },
+      getSelectedIndices: () => _selectedIndices,
     );
   }
 
@@ -180,6 +175,9 @@ class _WebHomePageState extends State<WebHomePage> {
       setState(() {
         isMainVideoUploaded = true;
         controller = newController;
+
+        semiResultControllers.clear();
+        _selectedIndices.clear();
       });
     }
   }
@@ -321,5 +319,10 @@ class _WebHomePageState extends State<WebHomePage> {
   Future<void> exportVideo() async {
     await FileSaver.instance
         .saveFile(name: "output.mp4", bytes: ffmpeg.readFile("output1.mp4"));
+  }
+
+  void deleteVideo(int selectedIndex) {
+    ffmpeg.unlink('output$selectedIndex.mp4');
+    ffmpeg.unlink('output$selectedIndex.ts');
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:js' as js;
 import 'dart:html' as html;
 
+import 'package:capstone/apis/api.dart';
 import 'package:capstone/web/widgets/chat_page.dart';
 import 'package:capstone/web/widgets/floating_action_button.dart';
 import 'package:capstone/web/widgets/result_page.dart';
@@ -30,6 +31,9 @@ class _WebHomePageState extends State<WebHomePage> {
 
   final progress = ValueNotifier<double?>(null);
   final statistics = ValueNotifier<String?>(null);
+
+  final List<String> texts = [];
+  final List<List<List<String>>> timeStamps = [];
 
   bool isLoading = false;
 
@@ -122,6 +126,7 @@ class _WebHomePageState extends State<WebHomePage> {
               child: ChatPage(
                 isMainVideoUploaded: isMainVideoUploaded,
                 trimGivenTimeStamps: trimGivenTimeStamps,
+                getTimeStamps: _getTimeStamps,
               )),
         ],
       ),
@@ -134,6 +139,8 @@ class _WebHomePageState extends State<WebHomePage> {
       width: width,
       semiResultControllers: semiResultControllers,
       getSelectedIndices: () => _selectedIndices,
+      getTimeStamps: () => timeStamps,
+      getTexts: () => texts,
     );
   }
 
@@ -160,6 +167,17 @@ class _WebHomePageState extends State<WebHomePage> {
             ),
           ),
         )));
+  }
+
+  Future<List<List<String>>> _getTimeStamps(String text) async {
+    final results = await getTimeStamps(text);
+
+    setState(() {
+      texts.add(text);
+      timeStamps.add(results);
+    });
+
+    return results;
   }
 
   Future<void> pickFile() async {

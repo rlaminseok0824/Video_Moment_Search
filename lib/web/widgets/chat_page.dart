@@ -1,4 +1,3 @@
-import 'package:capstone/apis/api.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 
@@ -6,10 +5,12 @@ class ChatPage extends StatefulWidget {
   const ChatPage(
       {super.key,
       required this.isMainVideoUploaded,
-      required this.trimGivenTimeStamps});
+      required this.trimGivenTimeStamps,
+      required this.getTimeStamps});
 
   final bool isMainVideoUploaded;
   final Function trimGivenTimeStamps;
+  final Function getTimeStamps;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -25,16 +26,16 @@ class _ChatPageState extends State<ChatPage> {
     setState(() {
       if (_textEditingController.text.isNotEmpty) {
         _messages.add(_textEditingController.text);
-        _textEditingController.clear();
         isLoading = true;
       }
     });
-    final timeStamps = await getTimeStamps();
+    final timeStamps = await widget.getTimeStamps(_textEditingController.text);
     for (int i = 0; i < timeStamps.length; i++) {
       await widget.trimGivenTimeStamps(timeStamps[i]);
     }
 
     setState(() {
+      _textEditingController.clear();
       _messages.add(timeStamps.toString());
       isLoading = false;
     });

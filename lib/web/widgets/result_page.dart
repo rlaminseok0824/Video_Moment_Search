@@ -45,7 +45,7 @@ class _ResultPageState extends State<ResultPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          text,
+          '"$text"',
           style: const TextStyle(
             color: Color(0xff14213D),
             fontSize: 20,
@@ -122,16 +122,16 @@ class _ResultPageState extends State<ResultPage> {
 
     return Column(
       children: [
-        const Center(
-          child: Text(
-            'Result Videos',
-            style: TextStyle(
-              color: Color(0xff14213D),
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
+        // const Center(
+        //   child: Text(
+        //     'Result Videos',
+        //     style: TextStyle(
+        //       color: Color(0xff14213D),
+        //       fontSize: 24,
+        //       fontWeight: FontWeight.bold,
+        //     ),
+        //   ),
+        // ),
         const SizedBox(height: 16),
         Container(
           width: widget.width,

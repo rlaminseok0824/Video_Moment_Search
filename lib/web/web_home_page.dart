@@ -4,6 +4,7 @@ import 'dart:html' as html;
 import 'package:capstone/apis/api.dart';
 import 'package:capstone/web/widgets/chat_page.dart';
 import 'package:capstone/web/widgets/floating_action_button.dart';
+import 'package:capstone/web/widgets/merged_video_page.dart';
 import 'package:capstone/web/widgets/result_page.dart';
 import 'package:capstone/web/widgets/upload_button_page.dart';
 import 'package:capstone/web/widgets/video_player_page.dart';
@@ -25,8 +26,11 @@ class _WebHomePageState extends State<WebHomePage> {
   late FFmpeg ffmpeg;
   FilePickerResult? filePickerResult;
   bool isMainVideoUploaded = false;
+  int selectedIdx = 0;
+
   VideoPlayerController? controller; // MainVideoController
   final List<VideoPlayerController> semiResultControllers = [];
+  final List<VideoPlayerController> resultControllers = [];
   final List<int> _selectedIndices = [];
 
   final progress = ValueNotifier<double?>(null);
@@ -134,13 +138,65 @@ class _WebHomePageState extends State<WebHomePage> {
   }
 
   Widget _buildResult() {
+    TextStyle tabBarTextStyle = const TextStyle(
+      color: Color(0xff14213D),
+      fontSize: 24,
+      fontWeight: FontWeight.bold,
+    );
+
+    TextStyle unselectedTabBarTextStyle = const TextStyle(
+      color: Color(0xffE5E5E5),
+      fontSize: 24,
+      fontWeight: FontWeight.normal,
+    );
     double width = MediaQuery.of(context).size.width * 0.8;
-    return ResultPage(
-      width: width,
-      semiResultControllers: semiResultControllers,
-      getSelectedIndices: () => _selectedIndices,
-      getTimeStamps: () => timeStamps,
-      getTexts: () => texts,
+    return DefaultTabController(
+      length: 2,
+      child: SizedBox(
+        width: width,
+        height: 1000,
+        child: Column(
+          children: [
+            TabBar(
+              onTap: (value) => setState(() {
+                selectedIdx = value;
+              }),
+              isScrollable: false,
+              tabs: [
+                Tab(
+                    child: Text(
+                  'Result Videos',
+                  style: selectedIdx == 0
+                      ? tabBarTextStyle
+                      : unselectedTabBarTextStyle,
+                )),
+                Tab(
+                  child: Text(
+                    'Merged Videos',
+                    style: selectedIdx != 0
+                        ? tabBarTextStyle
+                        : unselectedTabBarTextStyle,
+                  ),
+                ),
+              ],
+              indicatorColor: const Color(0xff14213D),
+            ),
+            Expanded(
+              child: TabBarView(children: [
+                ResultPage(
+                  width: width,
+                  semiResultControllers: semiResultControllers,
+                  getSelectedIndices: () => _selectedIndices,
+                  getTimeStamps: () => timeStamps,
+                  getTexts: () => texts,
+                ),
+                MergedVideoPage(
+                    width: width, resultControllers: resultControllers),
+              ]),
+            )
+          ],
+        ),
+      ),
     );
   }
 
@@ -322,12 +378,10 @@ class _WebHomePageState extends State<WebHomePage> {
     final newController =
         VideoPlayerController.networkUrl(Uri.parse(newVideo.path))
           ..initialize().then((_) {
-            setState(() {
-              isMainVideoUploaded = true;
-            });
+            setState(() {});
           });
 
-    semiResultControllers.add(newController);
+    resultControllers.add(newController);
 
     setState(() {
       _selectedIndices.clear();

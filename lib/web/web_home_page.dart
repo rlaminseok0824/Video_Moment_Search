@@ -161,7 +161,6 @@ class _WebHomePageState extends State<WebHomePage> {
               onTap: (value) => setState(() {
                 selectedIdx = value;
               }),
-              isScrollable: false,
               tabs: [
                 Tab(
                     child: Text(

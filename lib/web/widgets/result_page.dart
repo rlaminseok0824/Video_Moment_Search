@@ -32,15 +32,16 @@ class _ResultPageState extends State<ResultPage> {
     for (int i = 0; i < texts.length; i++) {
       int currCount = timeStamps[i].length;
 
-      videoRows.add(_buildvideosRow(texts[i], idx, currCount, selectedIndices));
+      videoRows.add(_buildvideosRow(
+          texts[i], idx, currCount, selectedIndices, timeStamps[i]));
       idx += currCount;
     }
 
     return videoRows;
   }
 
-  Widget _buildvideosRow(
-      String text, int startIndex, int endIndex, List<int> selectedIndices) {
+  Widget _buildvideosRow(String text, int startIndex, int endIndex,
+      List<int> selectedIndices, List<List<String>> timeStmaps) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -101,6 +102,21 @@ class _ResultPageState extends State<ResultPage> {
                           },
                           isSelected: selectedIndices.contains(i + startIndex),
                         ),
+                        // get Timestamps of the video
+                        Text(
+                          "${timeStmaps[i][0]} - ${timeStmaps[i][1]}",
+                          style: const TextStyle(
+                            color: Color(0xff14213D),
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          "Confidence: ${timeStmaps[i][2]}",
+                          style: const TextStyle(
+                            color: Color(0xff14213D),
+                            fontSize: 16,
+                          ),
+                        )
                       ],
                     ),
                   ),
@@ -122,16 +138,6 @@ class _ResultPageState extends State<ResultPage> {
 
     return Column(
       children: [
-        // const Center(
-        //   child: Text(
-        //     'Result Videos',
-        //     style: TextStyle(
-        //       color: Color(0xff14213D),
-        //       fontSize: 24,
-        //       fontWeight: FontWeight.bold,
-        //     ),
-        //   ),
-        // ),
         const SizedBox(height: 16),
         Container(
           width: widget.width,

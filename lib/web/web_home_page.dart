@@ -32,6 +32,7 @@ class _WebHomePageState extends State<WebHomePage> {
   final List<VideoPlayerController> semiResultControllers = [];
   final List<VideoPlayerController> resultControllers = [];
   final List<int> _selectedIndices = [];
+  final List<int> _selectedMergedIndices = [];
 
   final progress = ValueNotifier<double?>(null);
   final statistics = ValueNotifier<String?>(null);
@@ -190,7 +191,10 @@ class _WebHomePageState extends State<WebHomePage> {
                   getTexts: () => texts,
                 ),
                 MergedVideoPage(
-                    width: width, resultControllers: resultControllers),
+                  width: width,
+                  resultControllers: resultControllers,
+                  getSelectedIndices: () => _selectedMergedIndices,
+                ),
               ]),
             )
           ],
@@ -353,6 +357,8 @@ class _WebHomePageState extends State<WebHomePage> {
       return;
     }
 
+    final length = resultControllers.length;
+
     final inputFiles = [];
     for (var i = 0; i < _selectedIndices.length; i++) {
       inputFiles.add('output${_selectedIndices.elementAt(i)}.ts');
@@ -363,7 +369,7 @@ class _WebHomePageState extends State<WebHomePage> {
       'concat:${inputFiles.join('|')}',
       '-c',
       'copy',
-      'output_merged.mp4',
+      'output_merged$length.mp4',
     ]);
     // '-y -i "concat:$firstVideoPath|$secondVideoPath" -c copy $outputPath'
 
@@ -371,7 +377,7 @@ class _WebHomePageState extends State<WebHomePage> {
     // await ffmpeg.runCommand(
     //     '-y -i output0.mp4 -i output1.mp4 -r 24000/1001 -filter_complex [0:v]scale=1080:1920[v0];[1:v]scale=1080:1920[v1];[v0][v1]concat=n=2:v=1:[outv] -map [outv] -vsync 2 output.mp4');
 
-    final video = ffmpeg.readFile('output_merged.mp4');
+    final video = ffmpeg.readFile('output_merged$length.mp4');
     final XFile newVideo = XFile.fromData(video);
 
     final newController =
@@ -388,7 +394,7 @@ class _WebHomePageState extends State<WebHomePage> {
   }
 
   Future<void> exportVideos() async {
-    if (_selectedIndices.isEmpty) {
+    if (_selectedIndices.isEmpty && _selectedMergedIndices.isEmpty) {
       return;
     }
 
@@ -396,14 +402,23 @@ class _WebHomePageState extends State<WebHomePage> {
       await exportVideo(i, _selectedIndices.elementAt(i));
     }
 
+    for (int i = 0; i < _selectedMergedIndices.length; i++) {
+      await exportVideo(i, _selectedMergedIndices.elementAt(i), isMerged: true);
+    }
+
     setState(() {
       _selectedIndices.clear();
+      _selectedMergedIndices.clear();
     });
   }
 
-  Future<void> exportVideo(int idx1, int idx2) async {
-    await FileSaver.instance.saveFile(
-        name: "output$idx1.mp4", bytes: ffmpeg.readFile("output$idx2.mp4"));
+  Future<void> exportVideo(int idx1, int idx2, {bool isMerged = false}) async {
+    await isMerged
+        ? FileSaver.instance.saveFile(
+            name: "output_merged$idx1.mp4",
+            bytes: ffmpeg.readFile("output_merged$idx2.mp4"))
+        : FileSaver.instance.saveFile(
+            name: "output$idx1.mp4", bytes: ffmpeg.readFile("output$idx2.mp4"));
   }
 
   void deleteVideo(int selectedIndex) {

@@ -36,57 +36,60 @@ class _MergedVideoPageState extends State<MergedVideoPage> {
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Wrap(spacing: 16, runSpacing: 16, children: [
-                ...widget.resultControllers.mapIndexed((i, controller) {
-                  return Column(
-                    children: [
-                      ConstrainedBox(
-                        constraints:
-                            BoxConstraints(maxWidth: 300, maxHeight: 200),
-                        child: SizedBox(
-                          width: controller.value.size.width,
-                          height: controller.value.size.height,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.black),
-                            ),
-                            child: Chewie(
-                              controller: ChewieController(
-                                videoPlayerController: controller,
-                                aspectRatio: controller.value.aspectRatio,
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  ...widget.resultControllers.mapIndexed((i, controller) {
+                    return Column(
+                      children: [
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(
+                              maxWidth: 300, maxHeight: 200),
+                          child: SizedBox(
+                            width: controller.value.size.width,
+                            height: controller.value.size.height,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.black),
+                              ),
+                              child: Chewie(
+                                controller: ChewieController(
+                                  videoPlayerController: controller,
+                                  aspectRatio: controller.value.aspectRatio,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      SizedBox(height: 10),
-                      SizedBox(
-                        height: 32,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            CheckedBox(
-                              index: selectedIndices.indexOf(i) + 1,
-                              onPressed: () {
-                                setState(() {
-                                  if (selectedIndices.contains(i)) {
-                                    selectedIndices.remove(i);
-                                  } else {
-                                    selectedIndices.add(i);
-                                  }
-                                });
-                              },
-                              isSelected: selectedIndices.contains(i),
-                            ),
-                          ],
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 32,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              CheckedBox(
+                                index: selectedIndices.indexOf(i) + 1,
+                                onPressed: () {
+                                  setState(() {
+                                    if (selectedIndices.contains(i)) {
+                                      selectedIndices.remove(i);
+                                    } else {
+                                      selectedIndices.add(i);
+                                    }
+                                  });
+                                },
+                                isSelected: selectedIndices.contains(i),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ])
+                      ],
+                    );
+                  }).toList(),
+                ],
+              ),
             ]),
           ),
         ),

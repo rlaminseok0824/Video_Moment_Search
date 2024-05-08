@@ -24,7 +24,8 @@ class WebHomePage extends StatefulWidget {
   State<WebHomePage> createState() => _WebHomePageState();
 }
 
-class _WebHomePageState extends State<WebHomePage> {
+class _WebHomePageState extends State<WebHomePage>
+    with TickerProviderStateMixin {
   late FFmpeg ffmpeg;
   FilePickerResult? filePickerResult;
   bool isMainVideoUploaded = false;
@@ -42,12 +43,19 @@ class _WebHomePageState extends State<WebHomePage> {
   final List<String> texts = [];
   final List<List<List<String>>> timeStamps = [];
 
+  late TabController tabController;
+
   bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
     loadFFmpeg();
+    tabController = TabController(
+      initialIndex: selectedIdx,
+      length: 2,
+      vsync: this,
+    );
   }
 
   @override
@@ -153,54 +161,52 @@ class _WebHomePageState extends State<WebHomePage> {
       fontWeight: FontWeight.normal,
     );
     double width = MediaQuery.of(context).size.width * 0.8;
-    return DefaultTabController(
-      length: 2,
-      child: SizedBox(
-        width: width,
-        height: 1000,
-        child: Column(
-          children: [
-            TabBar(
-              onTap: (value) => setState(() {
-                selectedIdx = value;
-              }),
-              tabs: [
-                Tab(
-                    child: Text(
-                  'Result Videos',
-                  style: selectedIdx == 0
+    return SizedBox(
+      width: width,
+      height: 1000,
+      child: Column(
+        children: [
+          TabBar(
+            controller: tabController,
+            onTap: (value) => setState(() {
+              selectedIdx = value;
+            }),
+            tabs: [
+              Tab(
+                  child: Text(
+                'Result Videos',
+                style: selectedIdx == 0
+                    ? tabBarTextStyle
+                    : unselectedTabBarTextStyle,
+              )),
+              Tab(
+                child: Text(
+                  'Merged Videos',
+                  style: selectedIdx != 0
                       ? tabBarTextStyle
                       : unselectedTabBarTextStyle,
-                )),
-                Tab(
-                  child: Text(
-                    'Merged Videos',
-                    style: selectedIdx != 0
-                        ? tabBarTextStyle
-                        : unselectedTabBarTextStyle,
-                  ),
                 ),
-              ],
-              indicatorColor: const Color(0xff14213D),
-            ),
-            Expanded(
-              child: TabBarView(children: [
-                ResultPage(
-                  width: width,
-                  semiResultControllers: semiResultControllers,
-                  getSelectedIndices: () => _selectedIndices,
-                  getTimeStamps: () => timeStamps,
-                  getTexts: () => texts,
-                ),
-                MergedVideoPage(
-                  width: width,
-                  resultControllers: resultControllers,
-                  getSelectedIndices: () => _selectedMergedIndices,
-                ),
-              ]),
-            )
-          ],
-        ),
+              ),
+            ],
+            indicatorColor: const Color(0xff14213D),
+          ),
+          Expanded(
+            child: TabBarView(controller: tabController, children: [
+              ResultPage(
+                width: width,
+                semiResultControllers: semiResultControllers,
+                getSelectedIndices: () => _selectedIndices,
+                getTimeStamps: () => timeStamps,
+                getTexts: () => texts,
+              ),
+              MergedVideoPage(
+                width: width,
+                resultControllers: resultControllers,
+                getSelectedIndices: () => _selectedMergedIndices,
+              ),
+            ]),
+          )
+        ],
       ),
     );
   }
@@ -362,10 +368,10 @@ class _WebHomePageState extends State<WebHomePage> {
     writeInputFiles();
     final length = resultControllers.length;
 
-    final inputFiles = [];
-    for (var i = 0; i < _selectedIndices.length; i++) {
-      inputFiles.add('output${_selectedIndices.elementAt(i)}.ts');
-    }
+    // final inputFiles = [];
+    // for (var i = 0; i < _selectedIndices.length; i++) {
+    //   inputFiles.add('output${_selectedIndices.elementAt(i)}.ts');
+    // }
 
     // await ffmpeg.run([
     //   '-i',
@@ -398,8 +404,11 @@ class _WebHomePageState extends State<WebHomePage> {
     resultControllers.add(newController);
 
     setState(() {
+      selectedIdx = 1;
       _selectedIndices.clear();
     });
+
+    tabController.animateTo(selectedIdx);
   }
 
   Future<void> exportVideos() async {

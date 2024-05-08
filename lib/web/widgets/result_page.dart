@@ -53,7 +53,7 @@ class _ResultPageState extends State<ResultPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         Wrap(
           spacing: 16.0,
           runSpacing: 16.0,
@@ -66,7 +66,8 @@ class _ResultPageState extends State<ResultPage> {
               child: Column(
                 children: [
                   ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 300, maxHeight: 200),
+                    constraints:
+                        const BoxConstraints(maxWidth: 300, maxHeight: 200),
                     child: SizedBox(
                       width: controller.value.size.width,
                       height: controller.value.size.height,
@@ -83,7 +84,7 @@ class _ResultPageState extends State<ResultPage> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   SizedBox(
                     height: 32,
                     child: Row(
@@ -125,7 +126,7 @@ class _ResultPageState extends State<ResultPage> {
             );
           }).toList(),
         ),
-        Divider(), // Add divider between each set of videos
+        const Divider(), // Add divider between each set of videos
       ],
     );
   }

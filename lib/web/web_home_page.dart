@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:js' as js;
 import 'dart:html' as html;
+import 'dart:typed_data';
 
 import 'package:capstone/apis/api.dart';
 import 'package:capstone/web/widgets/chat_page.dart';
@@ -327,17 +329,17 @@ class _WebHomePageState extends State<WebHomePage> {
       'output$currControllerLength.mp4',
     ]);
 
-    await ffmpeg.run([
-      '-i',
-      'input.mp4',
-      '-ss',
-      timeStamp[0],
-      '-to',
-      timeStamp[1],
-      '-c',
-      'copy',
-      'output$currControllerLength.ts',
-    ]);
+    // await ffmpeg.run([
+    //   '-i',
+    //   'input.mp4',
+    //   '-ss',
+    //   timeStamp[0],
+    //   '-to',
+    //   timeStamp[1],
+    //   '-c',
+    //   'copy',
+    //   'output$currControllerLength.ts',
+    // ]);
 
     final video = ffmpeg.readFile('output$currControllerLength.mp4');
     final XFile newVideo = XFile.fromData(video);
@@ -357,6 +359,7 @@ class _WebHomePageState extends State<WebHomePage> {
       return;
     }
 
+    writeInputFiles();
     final length = resultControllers.length;
 
     final inputFiles = [];
@@ -364,18 +367,24 @@ class _WebHomePageState extends State<WebHomePage> {
       inputFiles.add('output${_selectedIndices.elementAt(i)}.ts');
     }
 
+    // await ffmpeg.run([
+    //   '-i',
+    //   'concat:${inputFiles.join('|')}',
+    //   '-c',
+    //   'copy',
+    //   'output_merged$length.mp4',
+    // ]);
     await ffmpeg.run([
+      '-f',
+      'concat',
       '-i',
-      'concat:${inputFiles.join('|')}',
+      'input.txt',
       '-c',
       'copy',
+      '-movflags',
+      '+faststart',
       'output_merged$length.mp4',
     ]);
-    // '-y -i "concat:$firstVideoPath|$secondVideoPath" -c copy $outputPath'
-
-    // 이제 concat이 되는데 이렇게 되면 너무 오래 걸림
-    // await ffmpeg.runCommand(
-    //     '-y -i output0.mp4 -i output1.mp4 -r 24000/1001 -filter_complex [0:v]scale=1080:1920[v0];[1:v]scale=1080:1920[v1];[v0][v1]concat=n=2:v=1:[outv] -map [outv] -vsync 2 output.mp4');
 
     final video = ffmpeg.readFile('output_merged$length.mp4');
     final XFile newVideo = XFile.fromData(video);
@@ -424,5 +433,15 @@ class _WebHomePageState extends State<WebHomePage> {
   void deleteVideo(int selectedIndex) {
     ffmpeg.unlink('output$selectedIndex.mp4');
     ffmpeg.unlink('output$selectedIndex.ts');
+  }
+
+  void writeInputFiles() {
+    final writeString = _selectedIndices
+        .map((e) => "file 'output$e.mp4'")
+        .join('\n')
+        .toString();
+    final inputList = utf8.encode(writeString);
+    final input = Uint8List.fromList(inputList);
+    ffmpeg.writeFile('input.txt', input);
   }
 }

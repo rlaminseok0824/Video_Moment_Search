@@ -422,11 +422,11 @@ class _WebHomePageState extends State<WebHomePage> {
   }
 
   Future<void> exportVideo(int idx1, int idx2, {bool isMerged = false}) async {
-    await isMerged
-        ? FileSaver.instance.saveFile(
+    isMerged
+        ? await FileSaver.instance.saveFile(
             name: "output_merged$idx1.mp4",
             bytes: ffmpeg.readFile("output_merged$idx2.mp4"))
-        : FileSaver.instance.saveFile(
+        : await FileSaver.instance.saveFile(
             name: "output$idx1.mp4", bytes: ffmpeg.readFile("output$idx2.mp4"));
   }
 

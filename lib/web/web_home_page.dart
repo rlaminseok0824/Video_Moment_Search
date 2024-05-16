@@ -32,6 +32,8 @@ class _WebHomePageState extends State<WebHomePage>
   int selectedIdx = 0;
 
   VideoPlayerController? controller; // MainVideoController
+  late String mainVideoID;
+  bool isMainVideoChanged = false;
   final List<VideoPlayerController> semiResultControllers = [];
   final List<VideoPlayerController> resultControllers = [];
   final List<int> _selectedIndices = [];
@@ -128,11 +130,12 @@ class _WebHomePageState extends State<WebHomePage>
               child: (isMainVideoUploaded)
                   ? VideoPlayerComponent(
                       chewieController: controller!,
-                      autoPlay: true,
+                      autoPlay: false,
                     )
                   : UploadButtonPage(
                       setStateCallback: _setController,
                       ffmpeg: ffmpeg,
+                      pickFile: pickFile,
                     )),
           Container(
               width: width,
@@ -237,7 +240,7 @@ class _WebHomePageState extends State<WebHomePage>
   }
 
   Future<List<List<String>>> _getTimeStamps(String text) async {
-    final results = await getTimeStamps(text);
+    final results = await getTimeStamps("123", text);
 
     setState(() {
       texts.add(text);
@@ -247,23 +250,34 @@ class _WebHomePageState extends State<WebHomePage>
     return results;
   }
 
-  Future<void> pickFile() async {
-    final filePickerResult =
-        await FilePicker.platform.pickFiles(type: FileType.video);
-    if (filePickerResult != null &&
-        filePickerResult.files.single.bytes != null) {
-      ffmpeg.writeFile('input.mp4', filePickerResult.files.single.bytes!);
-      final xfileVideo = XFile.fromData(filePickerResult.files.single.bytes!);
-      final newController =
-          VideoPlayerController.networkUrl(Uri.parse(xfileVideo.path));
-      await newController.initialize();
-      setState(() {
-        isMainVideoUploaded = true;
-        controller = newController;
+  Future<bool> pickFile() async {
+    try {
+      final filePickerResult =
+          await FilePicker.platform.pickFiles(type: FileType.video);
 
-        semiResultControllers.clear();
-        _selectedIndices.clear();
-      });
+      if (filePickerResult != null &&
+          filePickerResult.files.single.bytes != null) {
+        ffmpeg.writeFile('input.mp4', filePickerResult.files.single.bytes!);
+        final xfileVideo = XFile.fromData(filePickerResult.files.single.bytes!);
+        final newController =
+            VideoPlayerController.networkUrl(Uri.parse(xfileVideo.path));
+        await newController.initialize();
+        mainVideoID = await uploadFileToServer(xfileVideo);
+        setState(() {
+          isMainVideoUploaded = true;
+          controller = newController;
+
+          semiResultControllers.clear();
+          _selectedIndices.clear();
+        });
+        return true;
+      } else {
+        print("FilePicker result is null or file bytes are null.");
+        return false;
+      }
+    } catch (e) {
+      print("An error occurred: $e");
+      return false;
     }
   }
 

@@ -1,3 +1,4 @@
+import 'package:capstone/apis/api.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:ffmpeg_wasm/ffmpeg_wasm.dart';
 import 'package:file_picker/file_picker.dart';
@@ -6,44 +7,26 @@ import 'package:video_player/video_player.dart';
 
 class UploadButtonPage extends StatefulWidget {
   const UploadButtonPage(
-      {super.key, required this.setStateCallback, required this.ffmpeg});
+      {super.key,
+      required this.setStateCallback,
+      required this.ffmpeg,
+      required this.pickFile});
 
   final Function setStateCallback;
   final FFmpeg ffmpeg;
+  final Function pickFile;
 
   @override
   State<UploadButtonPage> createState() => _UploadButtonPageState();
 }
 
 class _UploadButtonPageState extends State<UploadButtonPage> {
-  XFile? xfileVideo;
-
-  Future<bool> pickFile() async {
-    final filePickerResult =
-        await FilePicker.platform.pickFiles(type: FileType.video);
-    if (filePickerResult != null &&
-        filePickerResult.files.single.bytes != null) {
-      widget.ffmpeg
-          .writeFile('input.mp4', filePickerResult.files.single.bytes!);
-      setState(() {
-        xfileVideo = XFile.fromData(filePickerResult.files.single.bytes!);
-      });
-      return true;
-    }
-    return false;
-  }
-
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () async {
         try {
-          if (await pickFile()) {
-            VideoPlayerController newController =
-                VideoPlayerController.networkUrl(Uri.parse(xfileVideo!.path));
-            await newController.initialize();
-            widget.setStateCallback(newController);
-          }
+          if (await widget.pickFile()) {}
         } catch (e) {
           const ContinuousRectangleBorder();
         }

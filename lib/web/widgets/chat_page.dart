@@ -34,9 +34,11 @@ class _ChatPageState extends State<ChatPage> {
       await widget.trimGivenTimeStamps(timeStamps[i]);
     }
 
+    final textResult = _convertReadbleResults(timeStamps);
+
     setState(() {
       _textEditingController.clear();
-      _messages.add(timeStamps.toString());
+      _messages.add(textResult);
       isLoading = false;
     });
   }
@@ -110,4 +112,16 @@ class _ChatPageState extends State<ChatPage> {
       ],
     );
   }
+}
+
+String _convertReadbleResults(List<List<String>> timeStamps) {
+  String result = '';
+  for (int i = 0; i < timeStamps.length; i++) {
+    result += 'Timestamp ${i + 1}: ${timeStamps[i][0]} - ${timeStamps[i][1]}\n';
+    result += 'Confidence: ${timeStamps[i][2]}';
+    if (i != timeStamps.length - 1) {
+      result += '\n';
+    }
+  }
+  return result;
 }

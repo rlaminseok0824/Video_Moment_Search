@@ -137,24 +137,26 @@ class _ResultPageState extends State<ResultPage> {
     List<String> texts = widget.getTexts();
     List<List<List<String>>> timeStamps = widget.getTimeStamps();
 
-    return Column(
-      children: [
-        const SizedBox(height: 16),
-        Container(
-          width: widget.width,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: const Color(0xffFCA311), width: 1),
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          Container(
+            width: widget.width,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: const Color(0xffFCA311), width: 1),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _buildCols(texts, timeStamps, selectedIndices)),
+            ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: _buildCols(texts, timeStamps, selectedIndices)),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

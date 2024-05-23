@@ -1,6 +1,4 @@
-import 'package:capstone/app/app_home_page.dart';
 import 'package:capstone/web/web_home_page.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -14,16 +12,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-          primaryColor: const Color(0xffE5E5E5),
-          pageTransitionsTheme: const PageTransitionsTheme(
-            builders: {
-              TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-              TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-            },
-          )),
-      home: kIsWeb ? const WebHomePage() : const AppHomePage(),
-    );
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+            primaryColor: const Color(0xffE5E5E5),
+            pageTransitionsTheme: const PageTransitionsTheme(
+              builders: {
+                TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+                TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+              },
+            )),
+        home: const WebHomePage());
   }
 }

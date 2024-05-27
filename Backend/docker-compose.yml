@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - /Users/kimminseok/Documents/go/capstone_BE/videos:/videos  # Change to your own path
+    environment:
+      - UPLOAD_DIR=/videos
+
+

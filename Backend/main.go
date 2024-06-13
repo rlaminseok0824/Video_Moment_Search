@@ -2,12 +2,12 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
-	"sort"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -16,31 +16,31 @@ import (
 )
 
 type retrievingReq struct {
-	videoID string 
-	text 	string
+	videoID string
+	text    string
 }
 
 func main() {
 	log.SetFlags(0)
 	err := godotenv.Load()
-  if err != nil {
-    log.Fatal("Error loading .env file")
-  }
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 	app := fiber.New(fiber.Config{
 		// BodyLimit: 1024 * 1024 * 1024, // 1GB
 		StreamRequestBody: true,
 	})
 
-	app.Use(cors.New(cors.Config{AllowMethods: "GET,POST", AllowOrigins: "*",AllowHeaders: "Origin, Content-Type, Accept",}))
+	app.Use(cors.New(cors.Config{AllowMethods: "GET,POST", AllowOrigins: "*", AllowHeaders: "Origin, Content-Type, Accept"}))
 
 	app.Post("/upload", func(c *fiber.Ctx) error {
 		log.Println("upload")
 
 		// 파일을 저장할 디렉토리 경로
-	uploadDir := os.Getenv("UPLOAD_DIR")
-	if uploadDir == "" {
-		uploadDir = "./videos/"
-	}
+		uploadDir := os.Getenv("UPLOAD_DIR")
+		if uploadDir == "" {
+			uploadDir = "./videos/"
+		}
 		// 요청에서 파일을 가져옴
 		file, err := c.FormFile("file")
 		if err != nil {
@@ -49,7 +49,7 @@ func main() {
 		}
 		uuid := uuid.New().String()
 		// 파일의 경로 설정
-		filePath := filepath.Join(uploadDir, uuid + filepath.Ext(file.Filename))
+		filePath := filepath.Join(uploadDir, uuid+filepath.Ext(file.Filename))
 		// 파일을 디스크에 저장
 		err = c.SaveFile(file, filePath)
 		if err != nil {
@@ -58,64 +58,121 @@ func main() {
 		return c.SendString(uuid)
 	})
 
-	app.Get("/retrieve", func(c *fiber.Ctx) error {	
+	app.Get("/retrieve", func(c *fiber.Ctx) error {
+		fmt.Print("Retrieve\n")
 		req := new(retrievingReq)
-		if err := c.QueryParser(req); err != nil {
-			return err
-		}
-		videoPath := filepath.Join("./videos/", req.videoID + ".mp4")
-		
+		// if err := c.QueryParser(req); err != nil {
+		// 	return err
+		// }
+		req.videoID = c.Query("videoID")
+		req.text = c.Query("text")
+		fmt.Println(req.videoID)
+		videoPath := filepath.Join("/model_dir/tmp/", req.videoID+".mp4")
+
 		data := CreateTritonBody(videoPath, req.text)
 		rawData, err := fetchTritonServer(data, os.Getenv("TRITON_URL"))
 		if err != nil {
 			return err
 		}
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
 
-		logit,span,err := DecodeRawData(rawData)
+		logit, span, err := DecodeRawData(rawData)
 		if err != nil {
 			return err
 		}
 
-		log.Println(logit)
-		log.Println()
-		log.Println(span)
+		// log.Println(logit)
+		// log.Println()
+		// log.Println(span)
 
-		result := Combine(logit,span,0.5)
-		sort.Slice(result, func(i,j int) bool {
-			return result[i][2] > result[j][2]
-		})
+		result := CombineAndSort(span, logit)
+
+		fmt.Println(result)
+
+		// result := Combine(logit, span, 0.1)
+
+		// sort.Slice(result, func(i, j int) bool {
+		// 	return result[i][2] > result[j][2]
+		// })
 
 		strResult := ToString(result[:3])
 		return c.SendString(strResult)
 	})
 
 	// data := []byte(`{
-    //     "name": "string_identity",
-    //             "inputs": [
-    //                 {
-    //                     "name": "INPUT0",
-    //                     "shape": [1],
-    //                     "datatype": "BYTES",
-    //                     "data": ["Test String!"]
-    //                 },
-    //                 {
-    //                     "name": "INPUT1",
-    //                     "shape": [1],
-    //                     "datatype": "BYTES",
-    //                     "data": ["Test String!"]
-    //                 }
-    //             ]
-    // }`)
+	//     "name": "string_identity",
+	//             "inputs": [
+	//                 {
+	//                     "name": "INPUT0",
+	//                     "shape": [1],
+	//                     "datatype": "BYTES",
+	//                     "data": ["Test String!"]
+	//                 },
+	//                 {
+	//                     "name": "INPUT1",
+	//                     "shape": [1],
+	//                     "datatype": "BYTES",
+	//                     "data": ["Test String!"]
+	//                 }
+	//             ]
+	// }`)
 
 	// Logits = Score, Spans = Start(버림), End Pair(반올림).
 	// 지금 1차원 데이터니까, 그걸 30, 2 shape의 2차원 데이터로 바꾼 후에, 이 뒤에는 Logit 스코어 보고 threshold 0.5 정도 둬서 그 이상의 spans 만 클라이언트 response로 보내주기.
 	// 그리고 이걸 클라이언트에서 받아서, 그걸로 video 자르기
 
+	req := new(retrievingReq)
+	req.videoID = "36b5afd9-649a-4ce9-ac19-5ba79ed8a6e2"
+	req.text = "Chef makes pizza and cuts it up."
+
+	err = test(*req)
+
+	// return
+
 	// 웹 서버 시작
-	err = app.Listen(":8080")
+	err = app.Listen("0.0.0.0:8080")
 	if err != nil {
 		panic(err)
 	}
+}
+
+func test(req retrievingReq) error {
+	fmt.Println(req.videoID)
+	videoPath := filepath.Join("/model_dir/tmp/", req.videoID+".mp4")
+
+	data := CreateTritonBody(videoPath, req.text)
+	rawData, err := fetchTritonServer(data, os.Getenv("TRITON_URL"))
+	if err != nil {
+		return err
+	}
+	fmt.Println("")
+	fmt.Println("")
+	fmt.Println("")
+
+	logit, span, err := DecodeRawData(rawData)
+	if err != nil {
+		return err
+	}
+
+	// log.Println(logit)
+	// log.Println()
+	// log.Println(span)
+
+	result := CombineAndSort(span, logit)
+
+	// result := Combine(logit, span, 0.1)
+
+	// sort.Slice(result, func(i, j int) bool {
+	// 	return result[i][2] > result[j][2]
+	// })
+
+	strResult := ToString(result[:3])
+
+	fmt.Println(strResult)
+
+	return nil
 }
 
 func fetchTritonServer(data []byte, url string) (string, error) {
@@ -130,9 +187,9 @@ func fetchTritonServer(data []byte, url string) (string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	req.Header.Set("Content-Type", "application/json")
-	
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -140,10 +197,10 @@ func fetchTritonServer(data []byte, url string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == 200{
+	if resp.StatusCode == 200 {
 		body, _ := io.ReadAll(resp.Body)
 		log.Println("response Body:", string(body))
 		return string(body), nil
 	}
-	return "",err	
+	return "", err
 }

@@ -8,8 +8,9 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - /Users/kimminseok/Documents/go/capstone_BE/videos:/videos  # Change to your own path
+      - /home/sungjin/capstone/tmp:/videos  # Change to your own path
     environment:
       - UPLOAD_DIR=/videos
+      - TRITON_URL=http://localhost:8000/v2/models/ensemble/infer
 
 

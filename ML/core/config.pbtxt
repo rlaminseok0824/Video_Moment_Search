@@ -1,0 +1,38 @@
+name: "core"
+platform: "pytorch_libtorch"
+max_batch_size: 1
+input: [
+    {
+        name: "src_vid"
+        data_type: TYPE_FP32
+        dims: [75, 514]
+    },
+    {
+        name: "src_vid_mask"
+        data_type: TYPE_FP32
+        dims: [75]
+    },
+    {
+        name: "src_txt"
+        data_type: TYPE_FP32
+        dims: [77, 512]
+    },
+    {
+        name: "src_txt_mask"
+        data_type: TYPE_FP32
+        dims: [77]
+    }
+]
+
+output: [
+    {
+        name: "pred_logits"
+        data_type: TYPE_FP32
+        dims: [30, 2]
+    },
+    {
+        name: "pred_spans"
+        data_type: TYPE_FP32
+        dims: [30, 2]
+    }
+]

@@ -1,0 +1,29 @@
+name: "clip"
+platform: "tensorrt_plan"
+max_batch_size: 16
+input: [
+    {
+        name: "video"
+        data_type: TYPE_FP32
+        dims: [75, 3, 224, 224]
+    },
+    {
+        name: "text"
+        data_type: TYPE_INT32
+        dims: [77]
+    }
+]
+
+output: [
+    {
+        name: "text_output"
+        data_type: TYPE_FP16
+        dims: [77, 512]
+    },
+    {
+        name: "video_output"
+        data_type: TYPE_FP16
+        dims: [75, 512]
+    }
+]
+

@@ -1,0 +1,37 @@
+name: "prepare_core"
+backend: "python"
+
+input: [
+    {
+        name: "clip_vid"
+        data_type: TYPE_FP16
+        dims: [75, 512]
+    },
+    {
+        name: "clip_text"
+        data_type: TYPE_FP16
+        dims: [77, 512]
+    }
+]
+output [
+    {
+        name: "clip_vid"
+        data_type: TYPE_FP32
+        dims: [75, 514]
+    },
+    {
+        name: "clip_text"
+        data_type: TYPE_FP32
+        dims: [77, 512]
+    },
+    {
+        name: "clip_vid_mask"
+        data_type: TYPE_FP32
+        dims: [75]
+    },
+    {
+        name: "clip_text_mask"
+        data_type: TYPE_FP32
+        dims: [77]
+    }
+]

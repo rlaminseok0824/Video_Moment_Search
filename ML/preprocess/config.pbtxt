@@ -1,0 +1,31 @@
+name: "preprocess"
+backend: "python"
+
+input [
+  {
+    name: "INPUT0"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  }
+]
+input [
+  {
+    name: "INPUT1"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  }
+]
+output [
+    {
+        name: "video"
+        data_type: TYPE_FP32
+        dims: [75, 3, 224, 224]
+    }
+]
+output [
+    {
+        name: "text"
+        data_type: TYPE_INT32
+        dims: [77]
+    }
+]

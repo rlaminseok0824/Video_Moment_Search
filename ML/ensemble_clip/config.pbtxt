@@ -1,0 +1,74 @@
+name: "ensemble_clip"
+platform: "ensemble"
+
+input [
+  {
+    name: "INPUT0"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  }
+]
+input [
+  {
+    name: "INPUT1"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  }
+]
+output: [
+    {
+        name: "text_output"
+        data_type: TYPE_FP16
+        dims: [77, 512]
+    },
+    {
+        name: "video_output"
+        data_type: TYPE_FP16
+        dims: [75, 512]
+    }
+]
+
+ensemble_scheduling {
+  step [
+    {
+      model_name: "preprocess",
+      model_version: -1,
+      input_map {
+        key: "INPUT0"
+        value: "INPUT0"
+      },
+      input_map {
+        key: "INPUT1"
+        value: "INPUT1"
+      },
+      output_map {
+        key: "video"
+        value: "video"
+      },
+      output_map {
+        key: "text"
+        value: "text"
+      }
+    },
+    {
+      model_name: "clip",
+      model_version: -1,
+      input_map {
+        key: "video"
+        value: "video"
+      },
+      input_map {
+        key: "text"
+        value: "text"
+      },
+      output_map {
+        key: "video_output"
+        value: "video_output"
+      },
+      output_map {
+        key: "text_output"
+        value: "text_output"
+      }
+    }
+  ]
+}
